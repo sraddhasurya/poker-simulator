@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Poker Hand Probability</title>
+</head>
+<body>
+  <h1>Poker Probability Calculator</h1>
+
+  <label>Hole Cards (e.g., AH, KH):</label><br>
+  <input type="text" id="holeCards" value=""><br><br>
+
+  <label>Community Cards (e.g., 10H, JH, QH):</label><br>
+  <input type="text" id="communityCards" value=""><br><br>
+
+  <button onclick="calculate()">Calculate Probabilities</button>
+
+  <h2>Results:</h2>
+  <pre id="result"></pre>
+
+  <script>
+    function calculate() {
+      const hole = document.getElementById("holeCards").value.split(",").map(card => card.trim());
+      const community = document.getElementById("communityCards").value.split(",").map(card => card.trim());
+
+      fetch("/api/poker/probabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          holeCards: hole,
+          communityCards: community
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        const formatted = JSON.stringify(data, null, 2);
+        document.getElementById("result").textContent = formatted;
+      })
+      .catch(err => {
+        document.getElementById("result").textContent = "Error: " + err;
+      });
+    }
+  </script>
+</body>
+</html>
