@@ -1,5 +1,9 @@
 package com.sraddhasurya.poker;
 
+/*
+ * Defines a playing card using it's suit and number 
+ */
+
 public class Card {
     private final String suit;
     private final int number;

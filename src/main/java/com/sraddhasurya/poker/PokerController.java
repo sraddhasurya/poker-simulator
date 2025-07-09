@@ -32,11 +32,19 @@ public class PokerController {
     
     @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/probabilities")
-    public ResponseEntity<Map<String, Double>> calculateProbabilities(@RequestBody PokerRequest request) {
+    public ResponseEntity<Map<String, Object>> calculateProbabilities(@RequestBody PokerRequest request) {
         try {
             List<Card> holeCards = CardParser.parseList(request.getHoleCards());
             List<Card> communityCards = CardParser.parseList(request.getCommunityCards());
-
+    
+            // Only calculate if we have 2 hole cards and at least 3 community cards
+            if (holeCards.size() != 2 || communityCards.size() < 3) {
+                return ResponseEntity.ok(Map.of(
+                    "probabilities", null,
+                    "expectedValue", null
+                ));
+            }
+    
             HandProbabilities probs = new HandProbabilities(holeCards);
             Map<String, Double> result = new LinkedHashMap<>();
             result.put("Pair", probs.chanceOfPair(communityCards));
@@ -47,11 +55,17 @@ public class PokerController {
             result.put("Full House", probs.chanceOfFullHouse(communityCards));
             result.put("Four of a Kind", probs.chanceOfFourOfKind(communityCards));
             result.put("Straight Flush", probs.chanceOfStraightFlush(communityCards));
-
-            return ResponseEntity.ok(result);
+    
+            double ev = PokerEVSimulator.simulateEV(holeCards, communityCards, request.getPotSize(), request.getCallAmount(), 10000);
+    
+            return ResponseEntity.ok(Map.of(
+                "probabilities", result,
+                "expectedValue", ev
+            ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", 0.0));
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid input"));
         }
     }
+    
 }
 

@@ -1,20 +1,29 @@
 import React from 'react';
 
-export default function ProbabilityDisplay({ probabilities }) {
+export default function ProbabilityDisplay({ probabilities, expectedValue }) {
   if (!probabilities) return null;
 
-  // Convert object to array and sort descending by percentage
-  const sortedEntries = Object.entries(probabilities)
-    .sort(([, a], [, b]) => b - a); // Sort by value (probability), descending
-
   return (
-    <div>
-      <h2>Probabilities</h2>
-      {sortedEntries.map(([hand, probability]) => (
-        <div key={hand}>
-          {hand}: {(probability * 100).toFixed(2)}%
+    <div className="probability-display">
+      <h2>Hand Probabilities</h2>
+      <ul>
+        {Object.entries(probabilities).map(([hand, prob]) => (
+          <li key={hand}>
+            <strong>{hand}</strong>: {(prob * 100).toFixed(2)}%
+          </li>
+        ))}
+      </ul>
+
+      {typeof expectedValue === 'number' && !isNaN(expectedValue) && (
+        <div style={{ marginTop: '20px' }}>
+          <h3>
+            Expected Value (EV):{' '}
+            <span style={{ color: expectedValue >= 0 ? 'green' : 'red' }}>
+              ${expectedValue.toFixed(2)}
+            </span>
+          </h3>
         </div>
-      ))}
+      )}
     </div>
   );
 }

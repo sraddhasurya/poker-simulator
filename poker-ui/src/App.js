@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import CardSelector from './components/CardSelector';
 import ProbabilityDisplay from './components/ProbabilityDisplay';
 import './App.css';
@@ -6,63 +6,78 @@ import './App.css';
 function App() {
   const [holeCards, setHoleCards] = useState(["", ""]);
   const [communityCards, setCommunityCards] = useState(["", "", "", "", ""]);
+  const [potSize, setPotSize] = useState(100);        // default example
+  const [callAmount, setCallAmount] = useState(50);    // default example
   const [probabilities, setProbabilities] = useState(null);
+  const [expectedValue, setExpectedValue] = useState(null);
 
-  // Auto-update probabilities when cards change
-  useEffect(() => {
-    const validHole = holeCards.filter(card => card);
-    const validCommunity = communityCards.filter(card => card);
-
-    if (validHole.length > 0 || validCommunity.length > 0) {
-      fetchProbabilities(validHole, validCommunity);
-    }
-  }, [holeCards, communityCards]);
-
-  const fetchProbabilities = useCallback(async (holeCards, communityCards) => {
+  const fetchProbabilities = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:8080/api/poker/probabilities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ holeCards, communityCards }),
+        body: JSON.stringify({
+          holeCards: holeCards.filter(Boolean),
+          communityCards: communityCards.filter(Boolean),
+          potSize,
+          callAmount
+        }),        
+      
       });
-  
-      if (!response.ok) {
-        throw new Error('Failed to fetch probabilities');
-      }
-  
+
+      if (!response.ok) throw new Error('Failed to fetch probabilities');
+
       const data = await response.json();
-      setProbabilities(data);
+      console.log("Sending:", { holeCards, communityCards, potSize, callAmount });
+      console.log("Received:", data);
+      setProbabilities(data.probabilities);
+      setExpectedValue(data.expectedValue);
     } catch (error) {
       console.error('Error fetching probabilities:', error);
     }
-  }, []);
+  }, [holeCards, communityCards, potSize, callAmount]);
 
-  const handleManualUpdate = () => {
-    fetchProbabilities();
-  };
-
-  const handleReset = () => {
-    setHoleCards(["", ""]);
-    setCommunityCards(["", "", "", "", ""]);
-    setProbabilities(null);
-    
-  };
+  useEffect(() => {
+    if (holeCards.every(Boolean)) {
+      fetchProbabilities();
+    }
+  }, [holeCards, communityCards, potSize, callAmount, fetchProbabilities]);
 
   return (
     <div className="App">
       <h1>Poker Probability App</h1>
+
       <CardSelector
-        onSubmit={fetchProbabilities}
         holeCards={holeCards}
         setHoleCards={setHoleCards}
         communityCards={communityCards}
         setCommunityCards={setCommunityCards}
+        onSubmit={fetchProbabilities}
       />
 
-      <div style={{ marginTop: '10px' }}>
-        
-    </div>
-      <ProbabilityDisplay probabilities={probabilities} />
+      <div style={{ marginTop: "20px" }}>
+        <label>
+          Pot Size: $
+          <input
+            type="number"
+            value={potSize}
+            onChange={(e) => setPotSize(Number(e.target.value))}
+            style={{ marginRight: "20px", width: "80px" }}
+          />
+        </label>
+
+        <label>
+          Call Amount: $
+          <input
+            type="number"
+            value={callAmount}
+            onChange={(e) => setCallAmount(Number(e.target.value))}
+            style={{ width: "80px" }}
+          />
+        </label>
+      </div>
+
+      <ProbabilityDisplay probabilities={probabilities} expectedValue={expectedValue} />
     </div>
   );
 }

@@ -41,6 +41,21 @@ export default function CardSelector({ onSubmit, holeCards, setHoleCards, commun
     setClicks(0);
   };
 
+  const getButtonLabel=()=>{
+    switch (clicks){
+      case 0:
+        return "Generate Hole Cards"
+      case 1:
+        return "Generate Flop Cards"
+      case 2:
+        return "Generate Turn Card"
+      case 3:
+        return "Generate River Card"
+      default:
+        return "All Cards Generated"
+    }
+  }
+
   const renderCard = (card) => {
     const rank = card.slice(0, -1);
     const suitChar = card.slice(-1).toUpperCase();
@@ -101,7 +116,10 @@ export default function CardSelector({ onSubmit, holeCards, setHoleCards, commun
       </div>
 
       <div className="button-group">
-        <button onClick={handleAutoGenerate}>Generate Next Cards</button>
+        
+        <button onClick={handleAutoGenerate} disabled={clicks>3}>
+          {getButtonLabel()}
+        </button>
         <button onClick={handleReset}>Start New</button>
         <button onClick={() => onSubmit(holeCards.filter(Boolean), communityCards.filter(Boolean))}>
           Show Probabilities
