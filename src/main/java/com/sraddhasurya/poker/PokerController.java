@@ -5,20 +5,22 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
-@RestController     //Tells spring that it handles web requests and sens back JSON data
 
-/*
- * Handles incoming web requests from frontend
+/**
+ * Controller for handling API requests for poker probability calculations
+ * Exposes endpoints that allow the frontend to request poker hand probabilities and expected values 
  */
+@RestController     // Indicates this class handles HTTP requests and returns JSON responses
 @RequestMapping("/api/poker")   //Base path for all URLs in this controller 
 public class PokerController {
 
-
+    /**
+     * Test endpoint for verifying backend logic with hardcoded cards
+     * @return JSON map of poker hand probabilities 
+     */
     @GetMapping("/test")
     public ResponseEntity<Map<String, Double>> test() {
-        /*
-         * Tester method 
-         */
+        
         List<Card> hole = List.of(CardParser.parse("AH"), CardParser.parse("KD"));
         List<Card> board = List.of(CardParser.parse("10H"), CardParser.parse("JH"), CardParser.parse("QH"));
 
@@ -33,9 +35,14 @@ public class PokerController {
         result.put("Four of a Kind", probs.chanceOfFourOfKind(board));
         result.put("Straight Flush", probs.chanceOfStraightFlush(board));
 
-        return ResponseEntity.ok(result);       //Sends back to who made the request 
+        return ResponseEntity.ok(result);       // Sends back to who made the request 
 }
     
+    /**
+    * Endpoiunt for calculating poker hand probabilities and expected value
+    * @param request a JSON body containing hole cards, community cards, pot size, and call size
+    * @return JSON response with probabilities and EV or an error if input is invalid 
+    */
     @CrossOrigin(origins = "http://localhost:3000")     //Allows React frontend to send requests to backend
     @PostMapping("/probabilities")
     public ResponseEntity<Map<String, Object>> calculateProbabilities(@RequestBody PokerRequest request) {
@@ -63,6 +70,7 @@ public class PokerController {
             result.put("Four of a Kind", probs.chanceOfFourOfKind(communityCards));
             result.put("Straight Flush", probs.chanceOfStraightFlush(communityCards));
     
+            //Runs simulation for expect value based on current board
             double ev = PokerEVSimulator.simulateEV(holeCards, communityCards, request.getPotSize(), request.getCallAmount(), 10000);   
     
             return ResponseEntity.ok(Map.of(
@@ -70,7 +78,7 @@ public class PokerController {
                 "expectedValue", ev
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid input"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid input"));  
         }
     }
     

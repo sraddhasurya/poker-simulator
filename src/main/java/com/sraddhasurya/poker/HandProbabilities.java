@@ -2,20 +2,27 @@ package com.sraddhasurya.poker;
 import java.util.*;
 
 
-
+/**
+ * Computes the probability of getting specific poker hands give the players hole cards and the currently revealed community cards
+ */
 public class HandProbabilities {
     private final Card card1;
     private final Card card2;
 
+    /**
+     * Constructs a HandProbabilities object using two hole cards
+     * 
+     * @param holeCards a list of exactly 2 hole cards 
+     */
     public HandProbabilities(List<Card> holeCards) {
         this.card1 = holeCards.get(0);
         this.card2 = holeCards.get(1);
     }
 
+    /**
+     * Probability of forming one pair 
+     */
     public double chanceOfPair(List<Card> flipped) {
-        /*
-         * Determines the probability of getting a pair
-         */
         if (card1.isPair(card2)) return 1.0;
         for (Card card : flipped) {
             if (card.isPair(card1) || card.isPair(card2)) return 1.0;
@@ -27,16 +34,13 @@ public class HandProbabilities {
         if (toBeRevealed == 0) return 0.0;
 
         double probForOneCard = 3.0 / unseen;
-        //Probability of not getting a pair would be the probability of getting a specific number minus one to the power of 2 due to the 2 different hole cards
-        //multipled by the number of cards in the community still to be flipped
         double probNoPair = Math.pow(1 - probForOneCard, 2 * toBeRevealed);
         return 1 - probNoPair;
     }
-
+    /*
+     * Probability of getting two pairs (not counting any pairs we may get in the community cards)
+     */
     public double chanceOfTwoPair(List<Card> flipped) {
-        /*
-         * Probability of getting two pairs (not counting any pairs we may get in the community cards)
-         */
         if (card1.isPair(card2)) return 0.0;
 
         boolean oneHasPair = false;
