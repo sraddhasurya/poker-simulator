@@ -195,7 +195,7 @@ public class HandProbabilities {
         }
 
         for (int count:counts.values()){
-            if (count>=0){
+            if (count==4){
                 return 1.0;
             }
         }

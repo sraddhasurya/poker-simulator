@@ -5,14 +5,20 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
-@RestController
+@RestController     //Tells spring that it handles web requests and sens back JSON data
 
-@RequestMapping("/api/poker")
+/*
+ * Handles incoming web requests from frontend
+ */
+@RequestMapping("/api/poker")   //Base path for all URLs in this controller 
 public class PokerController {
 
 
     @GetMapping("/test")
     public ResponseEntity<Map<String, Double>> test() {
+        /*
+         * Tester method 
+         */
         List<Card> hole = List.of(CardParser.parse("AH"), CardParser.parse("KD"));
         List<Card> board = List.of(CardParser.parse("10H"), CardParser.parse("JH"), CardParser.parse("QH"));
 
@@ -27,23 +33,24 @@ public class PokerController {
         result.put("Four of a Kind", probs.chanceOfFourOfKind(board));
         result.put("Straight Flush", probs.chanceOfStraightFlush(board));
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(result);       //Sends back to who made the request 
 }
     
-    @CrossOrigin(origins = "http://localhost:3000")
+    @CrossOrigin(origins = "http://localhost:3000")     //Allows React frontend to send requests to backend
     @PostMapping("/probabilities")
     public ResponseEntity<Map<String, Object>> calculateProbabilities(@RequestBody PokerRequest request) {
         try {
             List<Card> holeCards = CardParser.parseList(request.getHoleCards());
             List<Card> communityCards = CardParser.parseList(request.getCommunityCards());
     
-            // Only calculate if we have 2 hole cards and at least 3 community cards
-            if (holeCards.size() != 2 || communityCards.size() < 3) {
+            // Only calculate if we have 2 hole cards 
+            if (holeCards.size() < 2) {
                 return ResponseEntity.ok(Map.of(
                     "probabilities", null,
                     "expectedValue", null
                 ));
             }
+
     
             HandProbabilities probs = new HandProbabilities(holeCards);
             Map<String, Double> result = new LinkedHashMap<>();
@@ -56,7 +63,7 @@ public class PokerController {
             result.put("Four of a Kind", probs.chanceOfFourOfKind(communityCards));
             result.put("Straight Flush", probs.chanceOfStraightFlush(communityCards));
     
-            double ev = PokerEVSimulator.simulateEV(holeCards, communityCards, request.getPotSize(), request.getCallAmount(), 10000);
+            double ev = PokerEVSimulator.simulateEV(holeCards, communityCards, request.getPotSize(), request.getCallAmount(), 10000);   
     
             return ResponseEntity.ok(Map.of(
                 "probabilities", result,
