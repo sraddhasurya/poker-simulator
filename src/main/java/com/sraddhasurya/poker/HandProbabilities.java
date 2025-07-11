@@ -3,7 +3,6 @@ import java.util.*;
 
 
 
-
 public class HandProbabilities {
     private final Card card1;
     private final Card card2;
@@ -14,6 +13,9 @@ public class HandProbabilities {
     }
 
     public double chanceOfPair(List<Card> flipped) {
+        /*
+         * Determines the probability of getting a pair
+         */
         if (card1.isPair(card2)) return 1.0;
         for (Card card : flipped) {
             if (card.isPair(card1) || card.isPair(card2)) return 1.0;
@@ -25,15 +27,32 @@ public class HandProbabilities {
         if (toBeRevealed == 0) return 0.0;
 
         double probForOneCard = 3.0 / unseen;
+        //Probability of not getting a pair would be the probability of getting a specific number minus one to the power of 2 due to the 2 different hole cards
+        //multipled by the number of cards in the community still to be flipped
         double probNoPair = Math.pow(1 - probForOneCard, 2 * toBeRevealed);
         return 1 - probNoPair;
     }
 
     public double chanceOfTwoPair(List<Card> flipped) {
+        /*
+         * Probability of getting two pairs (not counting any pairs we may get in the community cards)
+         */
         if (card1.isPair(card2)) return 0.0;
 
-        boolean oneHasPair = flipped.stream().anyMatch(c -> c.isPair(card1));
-        boolean twoHasPair = flipped.stream().anyMatch(c -> c.isPair(card2));
+        boolean oneHasPair = false;
+        for (Card c : flipped) {
+            if (c.isPair(card1)) {
+                oneHasPair = true;
+                break; 
+            }
+        }
+        boolean twoHasPair=false;
+        for (Card c : flipped) {
+            if (c.isPair(card2)) {
+                twoHasPair = true;
+                break; 
+            }
+        }
         if (oneHasPair && twoHasPair) return 1.0;
 
         int known = 2 + flipped.size();
@@ -41,14 +60,18 @@ public class HandProbabilities {
         int toBeRevealed = 5 - flipped.size();
         if (toBeRevealed == 0) return 0.0;
 
+
         double probPairOne = 1 - Math.pow((unseen - 3.0) / unseen, toBeRevealed);
-        if (oneHasPair || twoHasPair) return probPairOne;
+        if (oneHasPair || twoHasPair) return probPairOne;   //if we have one pair
 
         double probPairTwo = 1 - Math.pow((unseen - 4.0) / (unseen - 1), toBeRevealed);
         return probPairOne * probPairTwo;
     }
 
     public double chanceOfThreeOfKind(List<Card> flipped) {
+        /*
+         * Calculates the probability of getting three of a kind
+         */
         int matches = 0;
         for (Card card : flipped) {
             if (card.isPair(card1) || card.isPair(card2)) matches++;
@@ -72,6 +95,9 @@ public class HandProbabilities {
     }
 
     public double chanceOfFlush(List<Card> flipped) {
+        /*
+         * Probability of getting a flush
+         */
         Map<String, Integer> suitCounts = new HashMap<>();
         suitCounts.put("hearts", 0);
         suitCounts.put("diamonds", 0);
@@ -83,7 +109,7 @@ public class HandProbabilities {
         allCards.add(card2);
 
         for (Card c : allCards) {
-            suitCounts.put(c.getSuit(), suitCounts.get(c.getSuit()) + 1);
+            suitCounts.put(c.getSuit(), suitCounts.get(c.getSuit()) + 1);   //Adds frequency of each suit to hashmap
         }
 
         int cardsSeen = allCards.size();
@@ -112,6 +138,9 @@ public class HandProbabilities {
     }
 
     public double chanceOfStraight(List<Card> flipped) {
+        /*
+         * Calculates the probabilty of getting a straight
+         */
         List<Integer> values = new ArrayList<>();
         values.add(card1.getNumber());
         values.add(card2.getNumber());
@@ -121,7 +150,7 @@ public class HandProbabilities {
 
         for (int i = 0; i <= values.size() - 5; i++) {
             int first = values.get(i);
-            if (values.subList(i, Math.min(i + 5, values.size())).equals(List.of(first, first+1, first+2, first+3, first+4)))
+            if (values.subList(i, Math.min(i + 5, values.size())).equals(List.of(first, first+1, first+2, first+3, first+4)))   //Already have a flush
                 return 1.0;
         }
 
@@ -153,16 +182,23 @@ public class HandProbabilities {
     }
 
     public double chanceOfFourOfKind(List<Card> flipped) {
+        /*
+         * Probability of getting four of a kind
+         */
         Map<Integer, Integer> counts = new HashMap<>();
         List<Card> all = new ArrayList<>(flipped);
         all.add(card1);
         all.add(card2);
 
         for (Card c : all) {
-            counts.put(c.getNumber(), counts.getOrDefault(c.getNumber(), 0) + 1);
+            counts.put(c.getNumber(), counts.getOrDefault(c.getNumber(), 0) + 1);   //Maps frequency of each number
         }
 
-        if (counts.values().stream().anyMatch(c -> c >= 4)) return 1.0;
+        for (int count:counts.values()){
+            if (count>=0){
+                return 1.0;
+            }
+        }
 
         int seen = all.size();
         int unseen = 52 - seen;
@@ -188,19 +224,46 @@ public class HandProbabilities {
     }
 
     public double chanceOfFullHouse(List<Card> flipped) {
+        /*
+         * Calculates the probability of getting a full house 
+         */
         Map<Integer, Integer> counts = new HashMap<>();
         List<Card> all = new ArrayList<>(flipped);
         all.add(card1);
         all.add(card2);
 
         for (Card c : all) {
-            counts.put(c.getNumber(), counts.getOrDefault(c.getNumber(), 0) + 1);
+            counts.put(c.getNumber(), counts.getOrDefault(c.getNumber(), 0) + 1);   //Maps frequency of each number
         }
 
-        boolean hasThree = counts.values().stream().anyMatch(c -> c >= 3);
-        Integer tripleVal = counts.entrySet().stream().filter(e -> e.getValue() >= 3).map(Map.Entry::getKey).findFirst().orElse(null);
-        boolean hasPair = counts.entrySet().stream()
-            .anyMatch(e -> e.getValue() >= 2 && (tripleVal == null || !e.getKey().equals(tripleVal)));
+        boolean hasThree = false;
+        for(Integer count:counts.values()){
+            if(count>=3){
+                hasThree=true;
+                break;
+            }
+        }
+
+        Integer tripleVal = null;
+        for (Map.Entry<Integer, Integer> entry : counts.entrySet()) {
+            if (entry.getValue() >= 3) {
+                tripleVal = entry.getKey();
+                break;
+            }
+        }
+
+        boolean hasPair = false;
+        for (Map.Entry<Integer, Integer> entry : counts.entrySet()) {
+            int rank = entry.getKey();
+            int count = entry.getValue();
+            if (count >= 2) {
+                if (tripleVal == null || rank != tripleVal) {
+                    hasPair = true;
+                    break; 
+                }
+            }
+        }
+        
 
         if (hasThree && hasPair) return 1.0;
         int toReveal = 5 - flipped.size();
@@ -217,6 +280,9 @@ public class HandProbabilities {
     }
 
     public double chanceOfStraightFlush(List<Card> flipped) {
+        /*
+         * Calculates the probability of getting a straight flush
+         */
         Map<String, Set<Integer>> suitToVals = new HashMap<>();
         suitToVals.put("hearts", new HashSet<>());
         suitToVals.put("diamonds", new HashSet<>());

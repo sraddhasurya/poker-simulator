@@ -4,6 +4,9 @@ import java.util.*;
 public class CardParser {
 
     public static Card parse(String code) {
+        /*
+         * Takes the input of the cards given in format Rank Suit (e.x. AH -- Ace of Hearts) and converts them into a proper card
+         */
         if (code.length() < 2 || code.length() > 3)
             throw new IllegalArgumentException("Invalid card code: " + code);
 
@@ -30,6 +33,9 @@ public class CardParser {
     }
 
     public static List<Card> parseList(List<String> codes) {
+        /*
+         * Converts all of the inputs given into a list of cards
+         */
         List<Card> result = new ArrayList<>();
         for (String code : codes) {
             result.add(parse(code));

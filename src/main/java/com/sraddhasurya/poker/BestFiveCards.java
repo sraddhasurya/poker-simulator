@@ -2,9 +2,13 @@ package com.sraddhasurya.poker;
 
 import java.util.*;
 
+
 public class BestFiveCards {
 
     public static List<Card> bestOf(List<Card> sevenCards) {
+        /*
+         * Determines the best hand out of the seven cards given and returns the what the best hand is in a list of cards
+         */
         if (sevenCards.size() != 7) {
             throw new IllegalArgumentException("Must provide exactly 7 cards.");
         }
@@ -27,6 +31,9 @@ public class BestFiveCards {
     }
 
     private static List<List<Card>> getAll5CardCombos(List<Card> cards) {
+        /*
+         * Determines all the five hand combinations we can get from the seven cards
+         */
         List<List<Card>> combos = new ArrayList<>();
         int n = cards.size();
         for (int i = 0; i < n; i++) {
