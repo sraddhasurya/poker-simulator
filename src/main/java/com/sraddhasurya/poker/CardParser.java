@@ -2,10 +2,18 @@ package com.sraddhasurya.poker;
 import java.util.*;
 
 public class CardParser {
+    /**
+     * Utility class for converting the shorthand card codes into Card objects 
+     */
 
+ 
     public static Card parse(String code) {
-        /*
-         * Takes the input of the cards given in format Rank Suit (e.x. AH -- Ace of Hearts) and converts them into a proper card
+        /**
+         * Converts a single card code into a Card object
+         * 
+         * @param code: a string representing the card (e.x. "AH")
+         * @return the converted Card object
+         * @throws IllegalArguemnetException if the input is invalid or unrecognized
          */
         if (code.length() < 2 || code.length() > 3)
             throw new IllegalArgumentException("Invalid card code: " + code);
@@ -34,7 +42,10 @@ public class CardParser {
 
     public static List<Card> parseList(List<String> codes) {
         /*
-         * Converts all of the inputs given into a list of cards
+         * Converts all of the inputs given into a list of Card objects
+         * 
+         * @param codes: list of card codes
+         * @return result: a list of corresponding Card objects 
          */
         List<Card> result = new ArrayList<>();
         for (String code : codes) {
