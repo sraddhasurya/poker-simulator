@@ -2,6 +2,9 @@ package com.sraddhasurya.poker;
 
 import java.util.List;
 
+/**
+ * Represents the request body structure sent from frontend to backend when calculating poker probabilities and EV
+ */
 public class PokerRequest {
     private List<String> holeCards;
     private List<String> communityCards;

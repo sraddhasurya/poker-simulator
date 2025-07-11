@@ -3,7 +3,11 @@ package com.sraddhasurya.poker;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Evaluates and classifies 5 card poker hands, assigns numerical strengths for comparison 
+ */
 public class PokerHandEvaluator {
+    // Maps hand rankings to numeric strength values for comparison 
     private static final Map<String, Integer> HAND_STRENGTH = Map.ofEntries(
         Map.entry("High Card", 0),
         Map.entry("One Pair", 1),
@@ -16,15 +20,21 @@ public class PokerHandEvaluator {
         Map.entry("Straight Flush", 8)
     );
 
+    /**
+     * Classifies a 5 card hand into its corresponding poker hand type 
+     * @param hand
+     * @return
+     */
     public static String classifyHand(List<Card> hand) {
         List<Integer> values = hand.stream().map(Card::getNumber).sorted().collect(Collectors.toList());
         List<String> suits = hand.stream().map(Card::getSuit).collect(Collectors.toList());
-        Map<Integer, Long> counts = values.stream().collect(Collectors.groupingBy(v -> v, Collectors.counting()));
+        Map<Integer, Long> counts = values.stream().collect(Collectors.groupingBy(v -> v, Collectors.counting()));      // Counts how many times each card value appears 
         Collection<Long> freqs = counts.values();
 
         boolean isFlush = new HashSet<>(suits).size() == 1;
         boolean isStraight = isConsecutive(values);
 
+        // Determines the hand ranking based on patterns 
         if (isFlush && isStraight) return "Straight Flush";
         if (freqs.contains(4L)) return "Four of a Kind";
         if (freqs.contains(3L) && freqs.contains(2L)) return "Full House";
@@ -36,6 +46,9 @@ public class PokerHandEvaluator {
         return "High Card";
     }
 
+    /**
+     * Checks whether a list of card values contains a straight 
+     */
     private static boolean isConsecutive(List<Integer> values) {
         Set<Integer> set = new TreeSet<>(values);
         List<Integer> list = new ArrayList<>(set);
