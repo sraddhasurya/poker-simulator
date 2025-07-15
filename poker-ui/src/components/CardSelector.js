@@ -2,59 +2,6 @@ import React, { useState } from 'react';
 
 export default function CardSelector({ onSubmit, holeCards, setHoleCards, communityCards, setCommunityCards }) {
   const [clicks, setClicks] = useState(0);
-  const [errors, setErrors] = useState({});
-
-  // Validation function to check for duplicate cards
-  const validateCards = (allCards) => {
-    const newErrors = {};
-    const cardCounts = {};
-    const validRanks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-    const validSuits = ['H', 'D', 'C', 'S'];
-    
-    allCards.forEach((card, index) => {
-      if (card && card.trim()) {
-        // Check for duplicate cards
-        if (cardCounts[card]) {
-          cardCounts[card].push(index);
-        } else {
-          cardCounts[card] = [index];
-        }
-
-        // Check for valid card format
-        const rank = card.slice(0, -1);
-        const suit = card.slice(-1).toUpperCase();
-        
-        if (!validRanks.includes(rank)) {
-          newErrors[index] = `Invalid rank: ${rank}. Use 2-10, J, Q, K, or A.`;
-        } else if (!validSuits.includes(suit)) {
-          newErrors[index] = `Invalid suit: ${suit}. Use H, D, C, or S.`;
-        }
-      }
-    });
-
-    // Check for duplicates
-    Object.entries(cardCounts).forEach(([card, indices]) => {
-      if (indices.length > 1) {
-        indices.forEach(index => {
-          newErrors[index] = `Card ${card} is already selected. Please choose a different card.`;
-        });
-      }
-    });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleCardChange = (cardArray, setCardArray, index, value) => {
-    const copy = [...cardArray];
-    copy[index] = value.toUpperCase();
-    setCardArray(copy);
-    
-    // Validate all cards after change
-    const allCards = [...holeCards, ...communityCards];
-    allCards[index] = value.toUpperCase();
-    validateCards(allCards);
-  };
 
   const handleAutoGenerate = () => {
     const suits = ['H', 'D', 'C', 'S'];
