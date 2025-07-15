@@ -25,7 +25,7 @@ public class PokerController {
         List<Card> board = List.of(CardParser.parse("10H"), CardParser.parse("JH"), CardParser.parse("QH"));
         int numPlayers=2;
 
-        HandProbabilities probs = new HandProbabilities(hole, numPlayers);
+        HandProbabilities probs = new HandProbabilities(hole);
         Map<String, Double> result = new LinkedHashMap<>();
         result.put("Pair", probs.chanceOfPair(board));
         result.put("Two Pair", probs.chanceOfTwoPair(board));
@@ -61,7 +61,7 @@ public class PokerController {
             }
 
     
-            HandProbabilities probs = new HandProbabilities(holeCards, numPlayers);
+            HandProbabilities probs = new HandProbabilities(holeCards);
             Map<String, Double> resultMap = new LinkedHashMap<>();
             resultMap.put("Pair", probs.chanceOfPair(communityCards));
             resultMap.put("Two Pair", probs.chanceOfTwoPair(communityCards));

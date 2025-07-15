@@ -12,7 +12,7 @@ function App() {
   const [expectedValue, setExpectedValue] = useState(null);
   const [numPlayers, setNumPlayers] = useState(2); // default 2 players
   const [winProbability, setWinProbability] = useState(null);
-
+  const anyCardsEntered = holeCards.some(Boolean) || communityCards.some(Boolean);
 
 
 
@@ -82,6 +82,7 @@ function App() {
         onChange={(e) => setNumPlayers(Number(e.target.value))}
         min={2}
         max={10}
+        disabled={anyCardsEntered}
         style={{ width: "50px", marginLeft: "10px"}}
       />
     </label>
