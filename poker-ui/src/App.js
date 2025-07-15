@@ -10,6 +10,11 @@ function App() {
   const [callAmount, setCallAmount] = useState(50);    // default example
   const [probabilities, setProbabilities] = useState(null);
   const [expectedValue, setExpectedValue] = useState(null);
+  const [numPlayers, setNumPlayers] = useState(2); // default 2 players
+  const [winProbability, setWinProbability] = useState(null);
+
+
+
 
   const fetchProbabilities = useCallback(async () => {
     try {
@@ -20,7 +25,8 @@ function App() {
           holeCards: holeCards.filter(Boolean),
           communityCards: communityCards.filter(Boolean),
           potSize,
-          callAmount
+          callAmount,
+          numPlayers,
         }),        
       
       });
@@ -28,20 +34,33 @@ function App() {
       if (!response.ok) throw new Error('Failed to fetch probabilities');
 
       const data = await response.json();
-      console.log("Sending:", { holeCards, communityCards, potSize, callAmount });
+      console.log("Sending:", { holeCards, communityCards, potSize, callAmount , numPlayers});
       console.log("Received:", data);
       setProbabilities(data.probabilities);
       setExpectedValue(data.expectedValue);
+      setWinProbability(data.winProbability);
+
     } catch (error) {
       console.error('Error fetching probabilities:', error);
     }
   }, [holeCards, communityCards, potSize, callAmount]);
 
   useEffect(() => {
+    const hasHoleCards = holeCards.some(card => card);
+    const hasCommunityCards = communityCards.some(card => card);
+  
+    if (!hasHoleCards && !hasCommunityCards) {
+      // Reset when no cards are filled
+      setProbabilities(null);
+      setExpectedValue(null);
+      return;
+    }
+  
     if (holeCards.every(Boolean)) {
       fetchProbabilities();
     }
   }, [holeCards, communityCards, potSize, callAmount, fetchProbabilities]);
+  
 
   return (
     <div className="App">
@@ -54,6 +73,19 @@ function App() {
         setCommunityCards={setCommunityCards}
         onSubmit={fetchProbabilities}
       />
+
+    <label>
+       Number of Players:
+      <input
+        type="number"
+        value={numPlayers}
+        onChange={(e) => setNumPlayers(Number(e.target.value))}
+        min={2}
+        max={10}
+        style={{ width: "50px", marginLeft: "10px"}}
+      />
+    </label>
+
 
       <div style={{ marginTop: "20px" }}>
         <label>
@@ -77,7 +109,7 @@ function App() {
         </label>
       </div>
 
-      <ProbabilityDisplay probabilities={probabilities} expectedValue={expectedValue} />
+      <ProbabilityDisplay probabilities={probabilities} expectedValue={expectedValue} winProbability={winProbability}  />
     </div>
   );
 }

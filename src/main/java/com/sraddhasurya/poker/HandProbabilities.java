@@ -8,15 +8,17 @@ import java.util.*;
 public class HandProbabilities {
     private final Card card1;
     private final Card card2;
+    private final int numPlayers;
 
     /**
      * Constructs a HandProbabilities object using two hole cards
      * 
      * @param holeCards a list of exactly 2 hole cards 
      */
-    public HandProbabilities(List<Card> holeCards) {
+    public HandProbabilities(List<Card> holeCards, int numPlayers) {
         this.card1 = holeCards.get(0);
         this.card2 = holeCards.get(1);
+        this.numPlayers=numPlayers;
     }
 
     /**
@@ -29,7 +31,7 @@ public class HandProbabilities {
         }
 
         int known = 2 + flipped.size();
-        int unseen = 52 - known;
+        int unseen = 52 - known - (2 * (numPlayers - 1));
         int toBeRevealed = 5 - flipped.size();
         if (toBeRevealed == 0) return 0.0;
 
@@ -60,7 +62,7 @@ public class HandProbabilities {
         if (oneHasPair && twoHasPair) return 1.0;
 
         int known = 2 + flipped.size();
-        int unseen = 52 - known;
+        int unseen = 52 - known - (2 * (numPlayers - 1));
         int toBeRevealed = 5 - flipped.size();
         if (toBeRevealed == 0) return 0.0;
 
@@ -85,7 +87,7 @@ public class HandProbabilities {
         if (matches >= 2) return 1.0;
 
         int known = 2 + flipped.size();
-        int unseen = 52 - known;
+        int unseen = 52 - known - (2 * (numPlayers - 1));
         int toBeRevealed = 5 - flipped.size();
         if (toBeRevealed == 0) return 0.0;
 
@@ -117,7 +119,7 @@ public class HandProbabilities {
         }
 
         int cardsSeen = allCards.size();
-        int unseen = 52 - cardsSeen;
+        int unseen = 52 - cardsSeen - (2 * (numPlayers - 1));
         int toReveal = 5 - flipped.size();
         if (toReveal == 0) return 0.0;
 
@@ -159,7 +161,7 @@ public class HandProbabilities {
         }
 
         int seen = values.size();
-        int unseen = 52 - seen;
+        int unseen = 52 - seen - (2 * (numPlayers - 1));
         int toReveal = 5 - flipped.size();
         if (toReveal == 0) return 0.0;
 
@@ -205,7 +207,7 @@ public class HandProbabilities {
         }
 
         int seen = all.size();
-        int unseen = 52 - seen;
+        int unseen = 52 - seen - (2 * (numPlayers - 1));
         int toReveal = 5 - flipped.size();
         if (toReveal == 0) return 0.0;
 
@@ -274,7 +276,7 @@ public class HandProbabilities {
         if (toReveal == 0) return 0.0;
 
         if (hasThree) {
-            int unseen = 52 - all.size();
+            int unseen = 52 - all.size() - (2 * (numPlayers - 1));
             return 1 - Math.pow((unseen - 3.0) / unseen, toReveal);
         }
 
@@ -315,7 +317,7 @@ public class HandProbabilities {
         }
 
         int toReveal = 5 - flipped.size();
-        int unseen = 52 - all.size();
+        int unseen = 52 - all.size() - (2 * (numPlayers - 1));
         if (toReveal == 0) return 0.0;
 
         double maxProb = 0.0;

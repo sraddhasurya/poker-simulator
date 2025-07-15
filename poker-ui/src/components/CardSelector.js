@@ -152,9 +152,11 @@ export default function CardSelector({ onSubmit, holeCards, setHoleCards, commun
 
       <div className="button-group">
         
-        <button onClick={handleAutoGenerate} disabled={clicks>3}>
-          {getButtonLabel()}
+      {clicks < 4 && (
+        <button onClick={handleAutoGenerate}>
+           {getButtonLabel()}
         </button>
+      )}
         <button onClick={handleReset}>Start New</button>
         <button onClick={() => onSubmit(holeCards.filter(Boolean), communityCards.filter(Boolean))}>
           Show Probabilities

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ProbabilityDisplay({ probabilities, expectedValue }) {
+export default function ProbabilityDisplay({ probabilities, expectedValue, winProbability, tieProbability }) {
   if (!probabilities) return null;
 
   return (
@@ -24,6 +24,17 @@ export default function ProbabilityDisplay({ probabilities, expectedValue }) {
           </h3>
         </div>
       )}
-    </div>
+    {typeof winProbability === 'number' && !isNaN(winProbability) && (
+      <div>
+         <p>Win Probability: {(winProbability * 100).toFixed(2)}%</p>
+      </div>
+      )}
+
+    {typeof tieProbability === 'number' && !isNaN(tieProbability) && (
+      <div>
+        <p>Tie Probability: {(tieProbability * 100).toFixed(2)}%</p>
+      </div>
+        )}
+      </div>
   );
 }

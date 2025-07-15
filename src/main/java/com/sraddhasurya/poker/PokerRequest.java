@@ -10,7 +10,16 @@ public class PokerRequest {
     private List<String> communityCards;
     private int potSize;
     private int callAmount;
+    private int numPlayers;
 
+    public int getNumPlayers() {
+        return numPlayers;
+    }
+    
+    public void setNumPlayers(int numPlayers) {
+        this.numPlayers = numPlayers;
+    }
+    
     public List<String> getHoleCards() {
         return holeCards;
     }

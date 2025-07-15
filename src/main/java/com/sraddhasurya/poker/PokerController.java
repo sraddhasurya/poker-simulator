@@ -23,8 +23,9 @@ public class PokerController {
         
         List<Card> hole = List.of(CardParser.parse("AH"), CardParser.parse("KD"));
         List<Card> board = List.of(CardParser.parse("10H"), CardParser.parse("JH"), CardParser.parse("QH"));
+        int numPlayers=2;
 
-        HandProbabilities probs = new HandProbabilities(hole);
+        HandProbabilities probs = new HandProbabilities(hole, numPlayers);
         Map<String, Double> result = new LinkedHashMap<>();
         result.put("Pair", probs.chanceOfPair(board));
         result.put("Two Pair", probs.chanceOfTwoPair(board));
@@ -49,6 +50,7 @@ public class PokerController {
         try {
             List<Card> holeCards = CardParser.parseList(request.getHoleCards());
             List<Card> communityCards = CardParser.parseList(request.getCommunityCards());
+            int numPlayers = request.getNumPlayers();
     
             // Only calculate if we have 2 hole cards 
             if (holeCards.size() < 2) {
@@ -59,23 +61,25 @@ public class PokerController {
             }
 
     
-            HandProbabilities probs = new HandProbabilities(holeCards);
-            Map<String, Double> result = new LinkedHashMap<>();
-            result.put("Pair", probs.chanceOfPair(communityCards));
-            result.put("Two Pair", probs.chanceOfTwoPair(communityCards));
-            result.put("Three of a Kind", probs.chanceOfThreeOfKind(communityCards));
-            result.put("Straight", probs.chanceOfStraight(communityCards));
-            result.put("Flush", probs.chanceOfFlush(communityCards));
-            result.put("Full House", probs.chanceOfFullHouse(communityCards));
-            result.put("Four of a Kind", probs.chanceOfFourOfKind(communityCards));
-            result.put("Straight Flush", probs.chanceOfStraightFlush(communityCards));
+            HandProbabilities probs = new HandProbabilities(holeCards, numPlayers);
+            Map<String, Double> resultMap = new LinkedHashMap<>();
+            resultMap.put("Pair", probs.chanceOfPair(communityCards));
+            resultMap.put("Two Pair", probs.chanceOfTwoPair(communityCards));
+            resultMap.put("Three of a Kind", probs.chanceOfThreeOfKind(communityCards));
+            resultMap.put("Straight", probs.chanceOfStraight(communityCards));
+            resultMap.put("Flush", probs.chanceOfFlush(communityCards));
+            resultMap.put("Full House", probs.chanceOfFullHouse(communityCards));
+            resultMap.put("Four of a Kind", probs.chanceOfFourOfKind(communityCards));
+            resultMap.put("Straight Flush", probs.chanceOfStraightFlush(communityCards));
     
             //Runs simulation for expect value based on current board
-            double ev = PokerEVSimulator.simulateEV(holeCards, communityCards, request.getPotSize(), request.getCallAmount(), 10000);   
+            PokerEVResult result = PokerEVSimulator.simulateEV(holeCards, communityCards, request.getPotSize(), request.getCallAmount(), 10000, request.getNumPlayers());   
     
             return ResponseEntity.ok(Map.of(
-                "probabilities", result,
-                "expectedValue", ev
+                "probabilities", resultMap,
+                "expectedValue", result.getExpectedValue(),
+                "winProbability", result.getWinProbability(),
+                "tieProbability", result.getTieProbability()
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid input"));  
