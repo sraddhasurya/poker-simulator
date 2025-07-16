@@ -22,10 +22,10 @@ input[type="text"] {
 
 .card-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+  flex-direction: row;
+  gap: 10px;
   justify-content: center;
-  margin-bottom: 1.5rem;
+  margin-top: 10px;
 }
 
 .card-slot {

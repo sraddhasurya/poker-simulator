@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function CardSelector({ onSubmit, holeCards, setHoleCards, communityCards, setCommunityCards }) {
+export default function CardSelector({ onSubmit, holeCards, setHoleCards, communityCards, setCommunityCards, onReset }) {
   const [clicks, setClicks] = useState(0);
 
   useEffect(() => {
@@ -74,6 +74,7 @@ export default function CardSelector({ onSubmit, holeCards, setHoleCards, commun
     setHoleCards(["", ""]);
     setCommunityCards(["", "", "", "", ""]);
     setClicks(0);
+    if (onReset) onReset();
   };
 
   const getButtonLabel=()=>{
