@@ -17,6 +17,7 @@ public class HandProbabilities {
     public HandProbabilities(List<Card> holeCards) {
         this.card1 = holeCards.get(0);
         this.card2 = holeCards.get(1);
+       
     }
 
     /**
@@ -76,26 +77,49 @@ public class HandProbabilities {
         /*
          * Calculates the probability of getting three of a kind
          */
-        int matches = 0;
+        Map<Integer, Integer> rankCounts = new HashMap<>();
+    
+        // Count ranks for the hole cards
+        rankCounts.put(card1.getNumber(), rankCounts.getOrDefault(card1.getNumber(), 0) + 1);
+        rankCounts.put(card2.getNumber(), rankCounts.getOrDefault(card2.getNumber(), 0) + 1);
+
+        // Count ranks from the board
         for (Card card : flipped) {
-            if (card.isPair(card1) || card.isPair(card2)) matches++;
+            rankCounts.put(card.getNumber(), rankCounts.getOrDefault(card.getNumber(), 0) + 1);
         }
 
-        if (card1.isPair(card2) && matches >= 1) return 1.0;
-        if (matches >= 2) return 1.0;
+        // Check if we already have 3 of a kind
+        for (int count : rankCounts.values()) {
+            if (count >= 3) return 1.0;
+        }
 
-        int known = 2 + flipped.size();
+        int known = 2 + flipped.size();           // cards we have seen
         int unseen = 52 - known;
-        int toBeRevealed = 5 - flipped.size();
+        int toBeRevealed = 5 - flipped.size();    // how many cards still to be dealt
         if (toBeRevealed == 0) return 0.0;
 
-        if (card1.isPair(card2)) {
-            return 1 - Math.pow((unseen - 2.0) / unseen, toBeRevealed);
-        } else {
-            double p1 = 1 - Math.pow((unseen - 3.0) / unseen, toBeRevealed);
-            double p2 = 1 - Math.pow((unseen - 5.0) / (unseen - 1), toBeRevealed);
-            return p1 * p2;
+        double probability = 0.0;
+
+        // Estimate for each rank we currently have 2 of
+        for (Map.Entry<Integer, Integer> entry : rankCounts.entrySet()) {
+            int count = entry.getValue();
+            if (count == 2) {
+                // 2 cards seen of this rank => 2 left in deck
+                int remainingSameRank = 4 - count;
+
+                // Chance of getting at least one more in the remaining cards
+                // P(at least 1 hit) = 1 - P(no hits)
+                double pNoHits = 1.0;
+                for (int i = 0; i < toBeRevealed; i++) {
+                    pNoHits *= (unseen - remainingSameRank - i) / (double)(unseen - i);
+                }
+                double pAtLeastOne = 1.0 - pNoHits;
+
+                probability += pAtLeastOne; // Could happen for multiple ranks (unlikely, but possible)
+            }
         }
+
+        return Math.min(probability, 1.0);  // Clamp to 1.0 in case of numerical error
     }
 
     public double chanceOfFlush(List<Card> flipped) {
