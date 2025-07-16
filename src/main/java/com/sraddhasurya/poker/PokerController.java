@@ -73,7 +73,7 @@ public class PokerController {
             resultMap.put("Straight Flush", probs.chanceOfStraightFlush(communityCards));
     
             //Runs simulation for expect value based on current board
-            PokerEVResult result = PokerEVSimulator.simulateEV(holeCards, communityCards, request.getPotSize(), request.getCallAmount(), 10000, request.getNumPlayers());   
+            PokerEVResult result = PokerEVSimulator.simulateEV(holeCards, communityCards, request.getPotSize(), request.getCallAmount(), request.getRaiseAmount(), 10000, request.getNumPlayers());   
     
             return ResponseEntity.ok(Map.of(
                 "probabilities", resultMap,

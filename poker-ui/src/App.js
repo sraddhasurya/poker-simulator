@@ -25,6 +25,7 @@ function App() {
           communityCards: communityCards.filter(Boolean),
           potSize,
           callAmount,
+          raiseAmount,
           numPlayers,
         }),        
       });
@@ -37,7 +38,7 @@ function App() {
     } catch (error) {
       console.error('Error fetching probabilities:', error);
     }
-  }, [holeCards, communityCards, potSize, callAmount, numPlayers]);
+  }, [holeCards, communityCards, potSize, callAmount,raiseAmount, numPlayers]);
 
   useEffect(() => {
     const hasHoleCards = holeCards.some(card => card);
@@ -54,29 +55,38 @@ function App() {
     }
   }, [holeCards, communityCards, potSize, callAmount, fetchProbabilities]);
 
-  const updatePotWithCall = () => {
+  const updatePotWithCall = async () => {
     const amt = Number(callAmount);
     if (!isNaN(amt) && amt > 0 && amt <= playerStack) {
+      // Compute EV based on *current* pot + call amount, not after
+      await fetchProbabilities();
+  
+      // Then actually commit the bet
       setPotSize(p => p + amt);
       setPlayerStack(s => s - amt);
-      setCallAmount(""); // optional: reset input
+      setCallAmount(""); // optional
     }
   };
+  
 
-  const handleRaise = () => {
+  const handleRaise = async () => {
     const amt = Number(raiseAmount);
     if (!isNaN(amt) && amt > 0 && amt <= playerStack) {
+      await fetchProbabilities();
       setPotSize(p => p + amt);
       setPlayerStack(s => s - amt);
-      setRaiseAmount(""); // optional: reset input
+      setRaiseAmount("");
     }
   };
+  
 
-  const handleAllIn = () => {
+  const handleAllIn = async () => {
+    await fetchProbabilities();
     setPotSize(p => p + playerStack);
     setRaiseAmount(playerStack);
     setPlayerStack(0);
   };
+  
 
   useEffect(() => {
     const filled = communityCards.filter(Boolean).length;

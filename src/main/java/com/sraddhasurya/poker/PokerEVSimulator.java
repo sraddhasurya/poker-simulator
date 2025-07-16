@@ -21,9 +21,11 @@ public class PokerEVSimulator {
      * @param numPlayers     total number of players (including the user)
      * @return estimated EV of calling the bet
      */
-    public static PokerEVResult simulateEV(List<Card> holeCards, List<Card> communityCards, int potSize, int callAmount, int numTrials, int numPlayers) {
+    public static PokerEVResult simulateEV(List<Card> holeCards, List<Card> communityCards, int potSize, int callAmount,int raiseAmount, int numTrials, int numPlayers) {
         int winCount = 0;
         int tieCount = 0;
+        int totalContribution=callAmount+raiseAmount;
+        int totalPot=potSize+totalContribution;
 
         for (int i = 0; i < numTrials; i++) {
             List<Card> deck = createDeck();
@@ -79,7 +81,7 @@ public class PokerEVSimulator {
 
         double winProb = winCount / (double) numTrials;
         double tieProb = tieCount / (double) numTrials;
-        double ev = (winProb * potSize) + (tieProb * potSize / 2) - callAmount;
+        double ev = (winProb * totalPot) + (tieProb * totalPot / 2) - totalContribution;
 
         return new PokerEVResult(winProb, tieProb, ev);
     }

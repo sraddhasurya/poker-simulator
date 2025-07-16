@@ -11,6 +11,7 @@ public class PokerRequest {
     private int potSize;
     private int callAmount;
     private int numPlayers;
+    private int raiseAmount;
 
     public int getNumPlayers() {
         return numPlayers;
@@ -19,7 +20,7 @@ public class PokerRequest {
     public void setNumPlayers(int numPlayers) {
         this.numPlayers = numPlayers;
     }
-    
+
     public List<String> getHoleCards() {
         return holeCards;
     }
@@ -47,6 +48,12 @@ public class PokerRequest {
     }
     public void setCallAmount(int callAmount){
         this.callAmount=callAmount;
+    }
+    public void setRaiseAmount(){
+        this.raiseAmount=raiseAmount;
+    }
+    public int getRaiseAmount(){
+        return raiseAmount;
     }
     
 }
