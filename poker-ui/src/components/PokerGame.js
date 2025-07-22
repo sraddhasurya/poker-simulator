@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 
 const SUITS = ['H', 'D', 'C', 'S'];
@@ -20,6 +19,9 @@ function shuffle(deck) {
     [d[i], d[j]] = [d[j], d[i]];
   }
   return d;
+}
+function recalculatePot(players) {
+  return players.reduce((sum, p) => sum + p.bet, 0);
 }
 
 function getHandString(hand, show) {
@@ -80,6 +82,7 @@ export default function PokerGame({ numPlayers, onExit }) {
   const [gameOver, setGameOver] = useState(false);
   const [winnerIdx, setWinnerIdx] = useState(null);
   const deckRef = useRef([]);
+  const dealingRef = useRef(false);
 
   // Initialize game
   useEffect(() => {
@@ -87,15 +90,223 @@ export default function PokerGame({ numPlayers, onExit }) {
     // eslint-disable-next-line
   }, []);
 
-  function startNewHand() {
-    const deck = shuffle(getDeck());
-    deckRef.current = deck;
+  
+
+  // Handle player action
+  function handleAction(action, amount) {
+    if (gameOver) return;
+    
+    setPlayers(prevPlayers => {
+      const newPlayers = [...prevPlayers];
+      const idx = currentPlayer;
+      const player = { ...newPlayers[idx] };
+      const toCall = currentBet - player.bet;
+      
+      if (action === 'fold') {
+        player.inHand = false;
+        player.folded = true;
+        setMessage('You folded!');
+      } else if (action === 'call') {
+        const actualCall = Math.min(toCall, player.bank);
+        player.bank -= actualCall;
+        player.bet += actualCall;
+        newPlayers[idx] = player; // ✅ update array first
+      
+        const updatedPot = recalculatePot(newPlayers); // ✅ now recalculate pot
+        setPot(updatedPot); // ✅ and update state
+      
+        setMessage(`You called for $${actualCall}.`);
+      }
+       else if (action === 'raise') {
+        const raiseAmt = Number(amount);
+        if (isNaN(raiseAmt) || raiseAmt < BIG_BLIND) {
+          setMessage(`Raise must be at least $${BIG_BLIND}`);
+          return prevPlayers;
+        }
+        const totalBet = toCall + raiseAmt;
+        const actualBet = Math.min(totalBet, player.bank);
+        player.bank -= actualBet;
+        player.bet += actualBet;
+        newPlayers[idx] = player; // ✅ update array first
+      
+        const updatedPot = recalculatePot(newPlayers); // ✅ then update pot
+        setPot(updatedPot);
+        setCurrentBet(player.bet);
+        setMessage(`You raised to $${player.bet}`);
+        setRaiseInput('');
+      }
+      
+      
+      newPlayers[idx] = player;
+      
+      // Use setTimeout to avoid state update conflicts
+      setTimeout(() => nextTurn(newPlayers, idx), 100);
+      
+      return newPlayers;
+    });
+  }
+
+  // Computer AI
+  function botAction(idx) {
+    setPlayers(prevPlayers => {
+      const newPlayers = [...prevPlayers];
+      const player = { ...newPlayers[idx] };
+      const toCall = currentBet - player.bet;
+      
+      // Simple AI: random fold/call/raise
+      if (Math.random() < 0.05) {
+        // Fold
+        player.inHand = false;
+        player.folded = true;
+        setMessage(`${player.name} folds.`);
+      } else if (Math.random() < 0.7 || toCall >= player.bank) {
+        // Call (or all-in if can't afford full call)
+        const actualCall = Math.min(toCall, player.bank);
+        player.bank -= actualCall;
+        player.bet += actualCall;
+        newPlayers[idx] = player;
+        setPot(recalculatePot(newPlayers));
+        if (actualCall < toCall) {
+          setMessage(`${player.name} goes all-in for $${actualCall}.`);
+        } else {
+          setMessage(`${player.name} calls for $${actualCall}.`);
+        }
+      } else {
+        // Raise
+        const raiseAmt = BIG_BLIND * (1 + Math.floor(Math.random() * 3));
+        const totalBet = toCall + raiseAmt;
+        const actualBet = Math.min(totalBet, player.bank);
+        player.bank -= actualBet;
+        player.bet += actualBet;
+        newPlayers[idx] = player;
+        setPot(recalculatePot(newPlayers));
+        setCurrentBet(player.bet);
+        setMessage(`${player.name} raises to $${player.bet}.`);
+      }
+      
+      newPlayers[idx] = player;
+      
+      setTimeout(() => nextTurn(newPlayers, idx), 800);
+      
+      return newPlayers;
+    });
+  }
+
+   // Add this state variable at the top with your other useState calls
+
+
+// Replace your nextTurn function with this fixed version
+async function getWinnerFromBackend(players, community) {
+  const playerHands = players.map(p => p.hand);
+  const response = await fetch('http://localhost:8080/api/poker/evaluate-winner', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      players: playerHands,
+      community
+    })
+  });
+  const data = await response.json();
+  return data.winner; // index
+}
+
+function nextTurn(newPlayers, prevIdx) {
+  if (dealingRef.current) return; // Prevent double dealing
+
+  const active = getActivePlayers(newPlayers);
+
+  if (active.length === 1) {
+    const winnerIndex = newPlayers.findIndex(p => p.inHand);
+    setPlayers(prevPlayers => {
+      const updatedPlayers = [...prevPlayers];
+      updatedPlayers[winnerIndex].bank += pot;
+      return updatedPlayers;
+    });
+    setShowdown(true);
+    setWinnerIdx(winnerIndex);
+    setMessage(`${newPlayers[winnerIndex].name} wins the pot of $${pot}!`);
+    setGameOver(true);
+    return;
+  }
+
+  const activeBets = active.map(p => p.bet);
+  const maxBet = Math.max(...activeBets);
+  const bettingComplete = activeBets.every(bet => bet === maxBet);
+
+  if (bettingComplete) {
+    dealingRef.current = true;
+
+    if (round === 'preflop') {
+      const flopCards = [deckRef.current.pop(), deckRef.current.pop(), deckRef.current.pop()];
+      setCommunity(flopCards);
+      setRound('flop');
+      setMessage('Flop dealt!');
+    } else if (round === 'flop') {
+      const turnCard = deckRef.current.pop();
+      setCommunity(prev => [...prev, turnCard]);
+      setRound('turn');
+      setMessage('Turn card dealt!');
+    } else if (round === 'turn') {
+      const riverCard = deckRef.current.pop();
+      setCommunity(prev => [...prev, riverCard]);
+      setRound('river');
+      setMessage('River card dealt!');
+    } else if (round === 'river') {
+      setShowdown(true);
+      const inHandIdxs = newPlayers.map((p, i) => p.inHand ? i : null).filter(i => i !== null);
+      const inHandPlayers = inHandIdxs.map(i => newPlayers[i]);
+      getWinnerFromBackend(inHandPlayers, community).then(winnerIdx => {
+        const globalWinnerIdx = inHandIdxs[winnerIdx];
+        setPlayers(prevPlayers => {
+          const updatedPlayers = [...prevPlayers];
+          updatedPlayers[globalWinnerIdx].bank += pot;
+          // Set winnerIdx and message here to use the updated bank value
+          setWinnerIdx(globalWinnerIdx);
+          setMessage(`${updatedPlayers[globalWinnerIdx].name} wins the pot of $${pot}! New bank: $${updatedPlayers[globalWinnerIdx].bank}`);
+          setGameOver(true);
+          dealingRef.current = false;
+          return updatedPlayers;
+        });
+      });
+      return;
+    }
+
+    setTimeout(() => {
+      setPlayers(prevPlayers => prevPlayers.map(p => ({ ...p, bet: 0 })));
+      setCurrentBet(0);
+      dealingRef.current = false;
+      const firstActiveIdx = newPlayers.findIndex(p => p.inHand);
+      setCurrentPlayer(firstActiveIdx);
+      if (firstActiveIdx !== 0) {
+        setTimeout(() => botAction(firstActiveIdx), 1000);
+      } else {
+        setMessage('Your turn!');
+      }
+    }, 1500);
+    return;
+  }
+
+  let nextIdx = getNextActivePlayer(newPlayers, prevIdx);
+  setCurrentPlayer(nextIdx);
+
+  if (nextIdx !== 0) {
+    setTimeout(() => botAction(nextIdx), 1000);
+  } else {
+    setMessage('Your turn!');
+  }
+}
+
+// Also update your startNewHand function to reset the dealingCards flag
+function startNewHand() {
+  const deck = shuffle(getDeck());
+  deckRef.current = deck;
+  setPlayers(prevPlayers => {
     const allPlayers = [];
     for (let i = 0; i < numPlayers + 1; i++) {
       allPlayers.push({
         name: getPlayerName(i),
         hand: [deckRef.current.pop(), deckRef.current.pop()],
-        bank: START_BANK,
+        bank: prevPlayers && prevPlayers[i] ? prevPlayers[i].bank : START_BANK,
         inHand: true,
         bet: 0,
         folded: false,
@@ -106,7 +317,6 @@ export default function PokerGame({ numPlayers, onExit }) {
     allPlayers[1].bet = SMALL_BLIND;
     allPlayers[2 % allPlayers.length].bank -= BIG_BLIND;
     allPlayers[2 % allPlayers.length].bet = BIG_BLIND;
-    setPlayers(allPlayers);
     setCommunity([]);
     setPot(SMALL_BLIND + BIG_BLIND);
     setCurrentBet(BIG_BLIND);
@@ -117,128 +327,25 @@ export default function PokerGame({ numPlayers, onExit }) {
     setRaiseInput('');
     setGameOver(false);
     setWinnerIdx(null);
-  }
+    dealingRef.current = false; // Reset the dealing flag
+    return allPlayers;
+  });
+}
 
-  // Handle player action
-  function handleAction(action, amount) {
-    if (gameOver) return;
-    let newPlayers = [...players];
-    let idx = currentPlayer;
-    let player = { ...newPlayers[idx] };
-    let toCall = currentBet - player.bet;
-    if (action === 'fold') {
-      player.inHand = false;
-      player.folded = true;
-      setMessage('You folded!');
-    } else if (action === 'call') {
-      player.bank -= toCall;
-      player.bet += toCall;
-      setPot(pot + toCall);
-      setMessage('You called.');
-    } else if (action === 'raise') {
-      const raiseAmt = Number(amount);
-      if (isNaN(raiseAmt) || raiseAmt < BIG_BLIND) {
-        setMessage(`Raise must be at least ${BIG_BLIND}`);
-        return;
-      }
-      player.bank -= (toCall + raiseAmt);
-      player.bet += (toCall + raiseAmt);
-      setPot(pot + toCall + raiseAmt);
-      setCurrentBet(player.bet);
-      setMessage(`You raised to $${player.bet}`);
-    }
-    newPlayers[idx] = player;
-    setPlayers(newPlayers);
-    nextTurn(newPlayers, idx);
-  }
-
-  // Computer AI
-  function botAction(idx) {
-    let newPlayers = [...players];
-    let player = { ...newPlayers[idx] };
-    let toCall = currentBet - player.bet;
-    // Simple AI: random fold/call/raise
-    let action;
-    if (Math.random() < 0.15) {
-      action = 'fold';
-      player.inHand = false;
-      player.folded = true;
-      setMessage(`${player.name} folds.`);
-    } else if (Math.random() < 0.7) {
-      action = 'call';
-      player.bank -= toCall;
-      player.bet += toCall;
-      setPot(pot + toCall);
-      setMessage(`${player.name} calls.`);
-    } else {
-      action = 'raise';
-      let raiseAmt = BIG_BLIND * (1 + Math.floor(Math.random() * 3));
-      player.bank -= (toCall + raiseAmt);
-      player.bet += (toCall + raiseAmt);
-      setPot(pot + toCall + raiseAmt);
-      setCurrentBet(player.bet);
-      setMessage(`${player.name} raises to $${player.bet}`);
-    }
-    newPlayers[idx] = player;
-    setPlayers(newPlayers);
-    setTimeout(() => nextTurn(newPlayers, idx), 800);
-  }
-
-  // Next turn logic
-  function nextTurn(newPlayers, prevIdx) {
-    // Check for end of betting round
-    const active = getActivePlayers(newPlayers);
-    if (active.length === 1) {
-      // Only one left, they win
-      setShowdown(true);
-      setWinnerIdx(newPlayers.findIndex(p => p.inHand));
-      setMessage(`${newPlayers[newPlayers.findIndex(p => p.inHand)].name} wins the pot!`);
-      setGameOver(true);
-      return;
-    }
-    // Find next player
-    let nextIdx = getNextActivePlayer(newPlayers, prevIdx);
-    if (nextIdx === 0) {
-      // End of round, deal next community card or showdown
-      if (round === 'preflop') {
-        setCommunity([deckRef.current.pop(), deckRef.current.pop(), deckRef.current.pop()]);
-        setRound('flop');
-        setMessage('Flop!');
-      } else if (round === 'flop') {
-        setCommunity(c => [...c, deckRef.current.pop()]);
-        setRound('turn');
-        setMessage('Turn!');
-      } else if (round === 'turn') {
-        setCommunity(c => [...c, deckRef.current.pop()]);
-        setRound('river');
-        setMessage('River!');
-      } else if (round === 'river') {
-        setShowdown(true);
-        // For now, pick random winner among those still in hand
-        const inHandIdxs = newPlayers.map((p, i) => p.inHand ? i : null).filter(i => i !== null);
-        const winner = inHandIdxs[Math.floor(Math.random() * inHandIdxs.length)];
-        setWinnerIdx(winner);
-        setMessage(`${newPlayers[winner].name} wins the pot!`);
-        setGameOver(true);
-        return;
-      }
-      // Reset bets for next round
-      setPlayers(ps => ps.map(p => ({ ...p, bet: 0 })));
-      setCurrentBet(0);
-      setTimeout(() => setCurrentPlayer(0), 1000);
-      return;
-    }
-    setCurrentPlayer(nextIdx);
-    if (nextIdx !== 0) {
-      setTimeout(() => botAction(nextIdx), 1000);
-    }
-  }
+// Also add this to see community state changes
+useEffect(() => {
+  console.log('Community cards updated:', community, 'Length:', community.length);
+}, [community]);
 
   // Guard clause to prevent accessing properties of undefined players
   if (!players || players.length === 0) {
     return <div style={{textAlign:'center',marginTop:40}}>Loading game...</div>;
   }
 
+  const currentPlayerData = players[currentPlayer];
+  const toCall = currentBet - (currentPlayerData?.bet || 0);
+
+  // Render
   // Render
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: '0 auto', position: 'relative' }}>

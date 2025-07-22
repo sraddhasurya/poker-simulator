@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import CardSelector from './components/CardSelector';
 import ProbabilityDisplay from './components/ProbabilityDisplay';
-import GameModal from './components/GameModal';
+import GameModal from './components/GameModel';
 import PokerGame from './components/PokerGame';
 import './App.css';
 

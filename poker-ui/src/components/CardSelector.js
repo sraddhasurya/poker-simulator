@@ -93,6 +93,8 @@ export default function CardSelector({ onSubmit, holeCards, setHoleCards, commun
   }
 
   const renderCard = (card) => {
+    if (!card || card === '') return null;
+    
     const rank = card.slice(0, -1);
     const suitChar = card.slice(-1).toUpperCase();
     const suits = { H: '♥', D: '♦', C: '♣', S: '♠' };
@@ -126,7 +128,7 @@ export default function CardSelector({ onSubmit, holeCards, setHoleCards, commun
               placeholder="e.g. AH"
               maxLength={3}
             />
-            {card && renderCard(card)}
+            {renderCard(card)}
           </div>
         ))}
       </div>
@@ -146,7 +148,7 @@ export default function CardSelector({ onSubmit, holeCards, setHoleCards, commun
               placeholder="e.g. 10H"
               maxLength={3}
             />
-            {card && renderCard(card)}
+            {renderCard(card)}
           </div>
         ))}
       </div>
@@ -159,9 +161,7 @@ export default function CardSelector({ onSubmit, holeCards, setHoleCards, commun
         </button>
       )}
         <button onClick={handleReset}>Start New</button>
-        <button onClick={() => onSubmit(holeCards.filter(Boolean), communityCards.filter(Boolean))}>
-          Show Probabilities
-        </button>
+        
       </div>
     </div>
   );

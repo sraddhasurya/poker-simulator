@@ -85,6 +85,38 @@ public class PokerController {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid input"));  
         }
     }
+    @CrossOrigin(origins = "http://localhost:3000")
+    @PostMapping("/evaluate-winner")
+    public ResponseEntity<Map<String, Object>> evaluateWinner(@RequestBody WinnerRequest request) {
+        try {
+            List<String> communityCodes = request.getCommunity();
+        List<Card> community = CardParser.parseList(communityCodes);
+
+        List<List<String>> playerCodes = request.getPlayers();
+        int bestIdx = 0;
+        int bestRank = -1;
+
+        for (int i = 0; i < playerCodes.size(); i++) {
+            List<Card> playerHand = CardParser.parseList(playerCodes.get(i));
+            List<Card> all = new ArrayList<>(playerHand);
+            all.addAll(community);
+
+            // Get best 5-card hand
+            List<Card> bestFive = BestFiveCards.bestOf(all);
+            String handRank = PokerHandEvaluator.classifyHand(bestFive);
+            int rank = PokerHandEvaluator.getHandStrength(handRank);
+
+            if (rank > bestRank) {
+                bestRank = rank;
+                bestIdx = i;
+            }
+        }
+
+        return ResponseEntity.ok(Map.of("winner", bestIdx));
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(Map.of("error", "Invalid input"));
+    }
+}
     
 }
 
